@@ -1,9 +1,8 @@
 <?php 
 session_start();
 
-// Hapus tugas jika ada parameter "hapus" di URL
-if ($_SERVER['REQUEST_METHOD'] === "GET" && isset($_GET['hapus'])) {
-    $hapus = $_GET['hapus'];
+if ($_SERVER['REQUEST_METHOD'] === "POST" && isset($_POST['hapus'])) {
+    $hapus = $_POST['hapus'];
     if (isset($_SESSION['tugas'][$hapus])) {
         unset($_SESSION['tugas'][$hapus]);
         $_SESSION['tugas'] = array_values($_SESSION['tugas']); // Reset indeks array
@@ -12,34 +11,32 @@ if ($_SERVER['REQUEST_METHOD'] === "GET" && isset($_GET['hapus'])) {
     exit();
 }
 
-// Tambah tugas jika ada POST request
-if ($_SERVER['REQUEST_METHOD'] === "POST") {
+if ($_SERVER['REQUEST_METHOD'] === "POST" && isset($_POST['tugas']) && isset($_POST['waktu'])) {
     $tugasBaru = $_POST['tugas'];
     $waktu = $_POST['waktu'];
 
-    if (empty($tugasBaru) || empty($waktu)) {
-        header('Location: ' . $_SERVER['SCRIPT_NAME']);
-        exit();
-    } else {
+    if (!empty($tugasBaru) && !empty($waktu)) {
         if (!isset($_SESSION['tugas'])) {
             $_SESSION['tugas'] = [];
         }
         $_SESSION['tugas'][] = ['tugas' => $tugasBaru, 'waktu' => $waktu];
-
-        header('Location: ' . $_SERVER['SCRIPT_NAME']);
-        exit();
     }
+
+    header('Location: ' . $_SERVER['SCRIPT_NAME']);
+    exit();
 }
 ?>
 
-<form action="/" method="post">
+<!-- Form Tambah Tugas -->
+<form action="<?= $_SERVER['SCRIPT_NAME'] ?>" method="post">
     <h2>Tugas</h2>
-    <input type="text" name="tugas">
+    <input type="text" name="tugas" required>
     <h2>Waktu</h2>
-    <input type="number" name="waktu">
+    <input type="number" name="waktu" required>
     <button type="submit">Simpan</button>
 </form>
 
+<!-- Daftar Tugas -->
 <?php if (isset($_SESSION['tugas']) && count($_SESSION['tugas']) > 0): ?>
     <h2>Daftar Tugas</h2>
     <ol>
@@ -47,7 +44,12 @@ if ($_SERVER['REQUEST_METHOD'] === "POST") {
             <li>
                 <p><?= htmlspecialchars($data['tugas']) ?></p>
                 <p><?= htmlspecialchars($data['waktu']) ?> jam</p>
-                <a href="?hapus=<?= $idx ?>">Hapus</a>
+                
+                <form action="<?= $_SERVER['SCRIPT_NAME'] ?>" method="post" style="display:inline;">
+                    <input type="hidden" name="hapus" value="<?= $idx ?>">
+                    <button type="submit" onclick="return confirm('Yakin ingin menghapus tugas ini?')">Hapus</button>
+                </form>
+
                 <a href="edit.php?edit=<?= $idx ?>">Edit</a>
             </li>
         <?php endforeach; ?>
